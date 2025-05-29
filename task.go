@@ -51,6 +51,8 @@ type Task struct {
 	savingpipe         chan Tile
 	tileSet            Set
 	outformat          string
+	logCounter int // 新增日志计数器
+	logFile *os.File // 新增日志文件句柄
 }
 
 // NewTask 创建下载任务
@@ -60,6 +62,12 @@ func NewTask(layers []Layer, m TileMap) *Task {
 	}
 	id, _ := shortid.Generate()
 
+	// 创建进度日志文件
+	logFile, err := os.Create("download_progress.log")
+	if err != nil {
+		log.Errorf("创建进度日志文件失败: %v", err)
+	}
+	
 	task := Task{
 		ID:      id,
 		Name:    m.Name,
@@ -67,6 +75,7 @@ func NewTask(layers []Layer, m TileMap) *Task {
 		Min:     m.Min,
 		Max:     m.Max,
 		TileMap: m,
+		logFile: logFile, // 设置文件句柄
 	}
 
 	for i := 0; i < len(layers); i++ {
@@ -235,7 +244,16 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 	start := time.Now()
 	defer task.tileWG.Done() //结束该瓦片请求
 	defer func() {
-		<-task.workers //workers完成并清退
+		<-task.workers
+		
+		task.logCounter++
+		if task.logCounter%1000 == 0 {
+			msg := fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n", 
+				time.Now().Format("2006-01-02 15:04:05"),
+				task.Total,
+				task.logCounter)
+			task.logFile.WriteString(msg)
+		}
 	}()
 
 	prep := func(t maptile.Tile, url string) string {
@@ -320,42 +338,33 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 
 // DownloadZoom 下载指定层级
 func (task *Task) downloadLayer(layer Layer) {
-	bar := pb.New64(layer.Count).Prefix(fmt.Sprintf("Zoom %d : ", layer.Zoom)).Postfix("\n")
-	// bar.SetRefreshRate(time.Second)
-	bar.Start()
-	// bar.SetMaxWidth(300)
+    bar := pb.New64(layer.Count).Prefix(fmt.Sprintf("Zoom %d : ", layer.Zoom)).Postfix("\n")
+    bar.Start()
 
-	var tilelist = make(chan maptile.Tile, task.bufSize)
+    var tilelist = make(chan maptile.Tile, task.bufSize)
+    go tilecover.CollectionChannel(layer.Collection, maptile.Zoom(layer.Zoom), tilelist)
 
-	go tilecover.CollectionChannel(layer.Collection, maptile.Zoom(layer.Zoom), tilelist)
+    for tile := range tilelist {
+        // 检查文件是否已经存在
+        filePath := utils.GetTileFilePath(tile, task)
+        if _, err := os.Stat(filePath); err == nil {
+            // 文件已存在，跳过下载
+            bar.Increment()
+            task.Bar.Increment()
+            continue
+        }
 
-	for tile := range tilelist {
-		// log.Infof(`fetching tile %v ~`, tile)
-		select {
-		case task.workers <- tile:
-			//设置请求发送间隔时间
-			time.Sleep(time.Duration(task.timeDelay) * time.Millisecond)
-			bar.Increment()
-			task.Bar.Increment()
-			task.tileWG.Add(1)
-			go task.tileFetcher(tile, layer.URL)
-		case <-task.abort:
-			log.Infof("Task %s got canceled.", task.ID)
-			close(tilelist)
-		case <-task.pause:
-			log.Infof("Task %s suspended.", task.ID)
-			select {
-			case <-task.play:
-				log.Infof("Task %s go on.", task.ID)
-			case <-task.abort:
-				log.Infof("Task %s got canceled.", task.ID)
-				close(tilelist)
-			}
-		}
-	}
-	//等待该层结束
-	task.tileWG.Wait()
-	bar.FinishPrint(fmt.Sprintf("Task %s Zoom %d finished ~", task.ID, layer.Zoom))
+        select {
+        case task.workers <- tile:
+            time.Sleep(time.Duration(task.timeDelay) * time.Millisecond)
+            bar.Increment()
+            task.Bar.Increment()
+            task.tileWG.Add(1)
+            go task.tileFetcher(tile, task.TileMap.getTileURL(tile))
+        }
+    }
+    task.tileWG.Wait()
+    bar.Finish()
 }
 
 // Download 开启下载任务
@@ -370,7 +379,9 @@ func (task *Task) Download() {
 	} else {
 		if task.File == "" {
 			outdir := viper.GetString("output.directory")
-			task.File = filepath.Join(outdir, fmt.Sprintf("%s-z%d-%d.%s", task.Name, task.Min, task.Max, task.ID))
+			task.File = filepath.Join(outdir,task.Name )
+			task.logFile.WriteString(fmt.Sprintf("%s-z%d-%d.%s", task.Name, task.Min, task.Max, task.ID))
+
 		}
 		os.MkdirAll(task.File, os.ModePerm)
 	}
@@ -379,4 +390,14 @@ func (task *Task) Download() {
 		task.downloadLayer(layer)
 	}
 	task.Bar.FinishPrint(fmt.Sprintf("Task %s finished ~", task.ID))
+	
+	defer func() {
+	    // 任务完成时写入总结信息
+	    msg := fmt.Sprintf("[完成] 时间: %s, 总数: %d, 成功下载: %d\n",
+	        time.Now().Format("2006-01-02 15:04:05"),
+	        task.Total,
+	        task.logCounter)
+	    task.logFile.WriteString(msg)
+	    task.logFile.Close()
+	}()
 }

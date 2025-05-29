@@ -59,7 +59,7 @@ func initConf(cfgFile string) {
 	viper.SetDefault("app.version", "v 0.1.0")
 	viper.SetDefault("app.title", "MapCloud Tiler")
 	viper.SetDefault("output.format", "mbtiles")
-	viper.SetDefault("output.directory", "output")
+	viper.SetDefault("output.directory", ".")
 	viper.SetDefault("task.workers", 4)
 	viper.SetDefault("task.savepipe", 1)
 	viper.SetDefault("task.timedelay", 0)
