@@ -5,48 +5,36 @@
 	#can be mbtiles/file
 	format ="file"
 	#the output dir
-	directory ="output"
+	directory ="D:\\SGDownload\\ChinaGrid\\china2\\"
 [task]
 	#number of fetchers
-	workers = 3
+	workers = 20
 	#number of savers
-	savepipe = 1
+	savepipe = 9
 	#min request interval, a speed limit, unit millisecond
-	timedelay = 50
+	timedelay = 20
 
 [tm]
 	#name for mbtiles
-	name = "google satelite"
+	name = "china2__自定义瓦片"
 	#max and min level for mbtiles
-	min = 0
-	max = 11
+	min = 18
+	max = 18
 	#can be pbf/png/jpg
-	format = "jpg"
+	format = "png"
 	#can be xyz/tm
 	schema = "xyz"
 	#the vector tiles metadata tilejson
-	# json = ""
+	#json = "./geojson/rect.geojson"
 	#url is the schema url of tiles
 	# url = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?sku=1016gFniej06a&access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA"
 	# url = "https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/{z}/{x}/{y}.vector.pbf?sku=1016gFniej06a&access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA"
 	# url = "https://api.maptiler.com/tiles/v3/{z}/{x}/{y}.pbf?key=KDhMfHvorAFkFe64wlZb"
 	# url = "http://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=75f0434f240669f4a2df6359275146d2"
-	url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=75f0434f240669f4a2df6359275146d2"
+	url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
 #lrs can set diff boundaries for diff levels
   [[lrs]]
-  	min = 0
-  	max = 5
-  	geojson = "./geojson/global.geojson"
- [[lrs]]
- 	min = 6
- 	max = 8
- 	geojson = "./geojson/china.geojson"
-  [[lrs]]
- 	min = 9
-  	max = 10
-  	geojson = "./geojson/jiangsu.geojson"
- [[lrs]]
-  	min = 11
-  	max = 11
-  	geojson = "./geojson/nanjing.geojson"
+  	min = 16
+  	max = 16
+  	geojson = "./geojson/id_1.geojson"
