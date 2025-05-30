@@ -182,7 +182,7 @@ func getZoomCount(g orb.Geometry, minz int, maxz int) map[int]int64 {
 	return info
 }
 // ... existing code ...
-func GetTileFilePath(tile maptile.Tile, task *Task) string {
+func getTileFilePath(tile maptile.Tile, task *Task) string {
     dir := filepath.Join(task.File, fmt.Sprintf("%d", tile.Z), fmt.Sprintf("%d", tile.X))
     fileName := filepath.Join(dir, fmt.Sprintf("%d.%s", tile.Y, task.TileMap.Format))
     return fileName
