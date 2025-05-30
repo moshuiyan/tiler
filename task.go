@@ -52,6 +52,7 @@ type Task struct {
 	tileSet            Set
 	outformat          string
 	logCounter int // 新增日志计数器
+	skippedCount int // 跳过的瓦片数量
 	logFile *os.File // 新增日志文件句柄
 }
 
@@ -248,10 +249,11 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 		
 		task.logCounter++
 		if task.logCounter%1000 == 0 {
-			msg := fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n", 
+			msg := fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n, 跳过: %d\n", 
 				time.Now().Format("2006-01-02 15:04:05"),
 				task.Total,
-				task.logCounter)
+				task.logCounter,
+				task.skippedCount)
 			task.logFile.WriteString(msg)
 		}
 	}()
@@ -344,15 +346,21 @@ func (task *Task) downloadLayer(layer Layer) {
     var tilelist = make(chan maptile.Tile, task.bufSize)
     go tilecover.CollectionChannel(layer.Collection, maptile.Zoom(layer.Zoom), tilelist)
 
-    for tile := range tilelist {
-        // 检查文件是否已经存在
-        filePath := utils.GetTileFilePath(tile, task)
-        if _, err := os.Stat(filePath); err == nil {
-            // 文件已存在，跳过下载
-            bar.Increment()
-            task.Bar.Increment()
-            continue
-        }
+    for tile := range tilelist { 
+        // 检查文件是否已经存在 
+        filePath := getTileFilePath(tile, task) 
+        if _, err := os.Stat(filePath); err == nil { 
+            // 文件已存在，跳过下载 
+            // 使用 task.logFile 写入日志
+			task.skippedCount++ 
+            logEntry := fmt.Sprintf("%s 已跳过\n", filepath.Base(filePath)) 
+            if _, err := task.logFile.WriteString(logEntry); err != nil { 
+                fmt.Printf("写入日志失败: %v\n", err) 
+            } 
+            bar.Increment() 
+            task.Bar.Increment() 
+            continue 
+        } 
 
         select {
         case task.workers <- tile:
