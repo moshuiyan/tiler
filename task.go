@@ -254,7 +254,7 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 				task.Total,
 				task.logCounter,
 				task.skippedCount)
-			task.logFile.WriteString(msg)
+			// task.logFile.WriteString(msg)
 		}
 	}()
 
@@ -353,10 +353,10 @@ func (task *Task) downloadLayer(layer Layer) {
             // 文件已存在，跳过下载 
             // 使用 task.logFile 写入日志
 			task.skippedCount++ 
-            logEntry := fmt.Sprintf("%s 已跳过\n", filepath.Base(filePath)) 
-            if _, err := task.logFile.WriteString(logEntry); err != nil { 
-                fmt.Printf("写入日志失败: %v\n", err) 
-            } 
+            logEntry := fmt.Sprintf("%s 已跳过\n", filepath) 
+            // if _, err := task.logFile.WriteString(logEntry); err != nil { 
+            //     fmt.Printf("写入日志失败: %v\n", err) 
+            // } 
             bar.Increment() 
             task.Bar.Increment() 
             continue 
