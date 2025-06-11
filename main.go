@@ -63,6 +63,7 @@ func initConf(cfgFile string) {
 	viper.SetDefault("task.workers", 4)
 	viper.SetDefault("task.savepipe", 1)
 	viper.SetDefault("task.timedelay", 0)
+	viper.SetDefault("task.calconly", false)
 }
 
 type TileData struct {

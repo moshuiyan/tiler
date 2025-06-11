@@ -5,7 +5,8 @@
 	#can be mbtiles/file
 	format ="file"
 	#the output dir
-	directory ="D:\\SGDownload\\ChinaGrid\\china2\\"
+	#directory ="D:\\SGDownload\\ChinaGrid\\china2\\"
+	directory ="D:\\downloads\\map\\"
 [task]
 	#number of fetchers
 	workers = 20
@@ -13,10 +14,12 @@
 	savepipe = 9
 	#min request interval, a speed limit, unit millisecond
 	timedelay = 20
+	# 仅统计不下载
+	calconly = false
 
 [tm]
 	#name for mbtiles
-	name = "china2__自定义瓦片"
+	name = "藻渡水库dem"
 	#max and min level for mbtiles
 	min = 18
 	max = 18
@@ -32,9 +35,12 @@
 	# url = "https://api.maptiler.com/tiles/v3/{z}/{x}/{y}.pbf?key=KDhMfHvorAFkFe64wlZb"
 	# url = "http://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=75f0434f240669f4a2df6359275146d2"
-	url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
+	# url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
+
+	url = "https://api.mapbox.com/raster/v1/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.webp?sku=101fxqAeRbtqp&access_token=pk.eyJ1IjoibW9zaHVpeWFuZ3l1ZSIsImEiOiJjbWJxODhwcHQwMTYxMmpxdmdrbDVzOWZhIn0.93db9jdAM7yaiT6tAbdHeQ"
 #lrs can set diff boundaries for diff levels
   [[lrs]]
-  	min = 16
-  	max = 16
-  	geojson = "./geojson/id_1.geojson"
+  	min = 1
+  	max = 8
+  	# geojson = "./geojson/id_1.geojson"
+	geojson ="D:\\downloads\\demRange.geojson"

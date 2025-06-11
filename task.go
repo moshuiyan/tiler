@@ -51,9 +51,10 @@ type Task struct {
 	savingpipe         chan Tile
 	tileSet            Set
 	outformat          string
-	logCounter int // 新增日志计数器
-	skippedCount int // 跳过的瓦片数量
-	logFile *os.File // 新增日志文件句柄
+	logCounter         int      // 新增日志计数器
+	skippedCount       int      // 跳过的瓦片数量
+	logFile            *os.File // 新增日志文件句柄
+	calconly           bool
 }
 
 // NewTask 创建下载任务
@@ -68,15 +69,16 @@ func NewTask(layers []Layer, m TileMap) *Task {
 	if err != nil {
 		log.Errorf("创建进度日志文件失败: %v", err)
 	}
-	
+
 	task := Task{
-		ID:      id,
-		Name:    m.Name,
-		Layers:  layers,
-		Min:     m.Min,
-		Max:     m.Max,
-		TileMap: m,
-		logFile: logFile, // 设置文件句柄
+		ID:       id,
+		Name:     m.Name,
+		Layers:   layers,
+		Min:      m.Min,
+		Max:      m.Max,
+		TileMap:  m,
+		logFile:  logFile, // 设置文件句柄
+		calconly: viper.GetBool("task.calconly"),
 	}
 
 	for i := 0; i < len(layers); i++ {
@@ -246,10 +248,10 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 	defer task.tileWG.Done() //结束该瓦片请求
 	defer func() {
 		<-task.workers
-		
+
 		task.logCounter++
 		if task.logCounter%1000 == 0 {
-			msg := fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n, 跳过: %d\n", 
+			fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n, 跳过: %d\n",
 				time.Now().Format("2006-01-02 15:04:05"),
 				task.Total,
 				task.logCounter,
@@ -340,39 +342,40 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 
 // DownloadZoom 下载指定层级
 func (task *Task) downloadLayer(layer Layer) {
-    bar := pb.New64(layer.Count).Prefix(fmt.Sprintf("Zoom %d : ", layer.Zoom)).Postfix("\n")
-    bar.Start()
+	bar := pb.New64(layer.Count).Prefix(fmt.Sprintf("Zoom %d : ", layer.Zoom)).Postfix("\n")
+	bar.Start()
 
-    var tilelist = make(chan maptile.Tile, task.bufSize)
-    go tilecover.CollectionChannel(layer.Collection, maptile.Zoom(layer.Zoom), tilelist)
+	var tilelist = make(chan maptile.Tile, task.bufSize)
+	go tilecover.CollectionChannel(layer.Collection, maptile.Zoom(layer.Zoom), tilelist)
 
-    for tile := range tilelist { 
-        // 检查文件是否已经存在 
-        filePath := getTileFilePath(tile, task) 
-        if _, err := os.Stat(filePath); err == nil { 
-            // 文件已存在，跳过下载 
-            // 使用 task.logFile 写入日志
-			task.skippedCount++ 
-            logEntry := fmt.Sprintf("%s 已跳过\n", filepath) 
-            // if _, err := task.logFile.WriteString(logEntry); err != nil { 
-            //     fmt.Printf("写入日志失败: %v\n", err) 
-            // } 
-            bar.Increment() 
-            task.Bar.Increment() 
-            continue 
-        } 
+	for tile := range tilelist {
+		// 检查文件是否已经存在
+		filePath := getTileFilePath(tile, task)
+		if _, err := os.Stat(filePath); err == nil {
+			// 文件已存在，跳过下载
+			// 使用 task.logFile 写入日志
+			task.skippedCount++
+			// 原代码中 filepath 是包名，此处应使用具体的文件路径变量 filePath
+			fmt.Sprintf("%s 已跳过\n", filePath)
+			// if _, err := task.logFile.WriteString(logEntry); err != nil {
+			//     fmt.Printf("写入日志失败: %v\n", err)
+			// }
+			bar.Increment()
+			task.Bar.Increment()
+			continue
+		}
 
-        select {
-        case task.workers <- tile:
-            time.Sleep(time.Duration(task.timeDelay) * time.Millisecond)
-            bar.Increment()
-            task.Bar.Increment()
-            task.tileWG.Add(1)
-            go task.tileFetcher(tile, task.TileMap.getTileURL(tile))
-        }
-    }
-    task.tileWG.Wait()
-    bar.Finish()
+		select {
+		case task.workers <- tile:
+			time.Sleep(time.Duration(task.timeDelay) * time.Millisecond)
+			bar.Increment()
+			task.Bar.Increment()
+			task.tileWG.Add(1)
+			go task.tileFetcher(tile, task.TileMap.getTileURL(tile))
+		}
+	}
+	task.tileWG.Wait()
+	bar.Finish()
 }
 
 // Download 开启下载任务
@@ -382,12 +385,32 @@ func (task *Task) Download() {
 	// task.Bar.SetRefreshRate(10 * time.Second)
 	// task.Bar.Format("<.- >")
 	task.Bar.Start()
+	if task.calconly {
+		// 仅统计，生成统计文件
+		statFileName := fmt.Sprintf("%s_statistics.txt", task.Name)
+		file, err := os.Create(statFileName)
+		if err != nil {
+			log.Errorf("创建统计文件失败: %v", err)
+			return
+		}
+		defer file.Close()
+
+		total := int64(0)
+		for _, layer := range task.Layers {
+			line := fmt.Sprintf("Zoom %d: %d 个瓦片\n", layer.Zoom, layer.Count)
+			file.WriteString(line)
+			total += layer.Count
+		}
+		file.WriteString(fmt.Sprintf("总数: %d 个瓦片\n", total))
+		task.Bar.FinishPrint("仅统计模式完成，统计文件已生成。")
+		return
+	}
 	if task.outformat == "mbtiles" {
 		task.SetupMBTileTables()
 	} else {
 		if task.File == "" {
 			outdir := viper.GetString("output.directory")
-			task.File = filepath.Join(outdir,task.Name )
+			task.File = filepath.Join(outdir, task.Name)
 			task.logFile.WriteString(fmt.Sprintf("%s-z%d-%d.%s", task.Name, task.Min, task.Max, task.ID))
 
 		}
@@ -398,14 +421,14 @@ func (task *Task) Download() {
 		task.downloadLayer(layer)
 	}
 	task.Bar.FinishPrint(fmt.Sprintf("Task %s finished ~", task.ID))
-	
+
 	defer func() {
-	    // 任务完成时写入总结信息
-	    msg := fmt.Sprintf("[完成] 时间: %s, 总数: %d, 成功下载: %d\n",
-	        time.Now().Format("2006-01-02 15:04:05"),
-	        task.Total,
-	        task.logCounter)
-	    task.logFile.WriteString(msg)
-	    task.logFile.Close()
+		// 任务完成时写入总结信息
+		msg := fmt.Sprintf("[完成] 时间: %s, 总数: %d, 成功下载: %d\n",
+			time.Now().Format("2006-01-02 15:04:05"),
+			task.Total,
+			task.logCounter)
+		task.logFile.WriteString(msg)
+		task.logFile.Close()
 	}()
 }
