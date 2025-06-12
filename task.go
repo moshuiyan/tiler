@@ -65,7 +65,9 @@ func NewTask(layers []Layer, m TileMap) *Task {
 	id, _ := shortid.Generate()
 
 	// 创建进度日志文件
-	logFile, err := os.Create("download_progress.log")
+
+	// 将 currentSeconds 转换为字符串，使用 strconv.FormatInt 方法以正确获取数字字符串
+	logFile, err := os.Create("download_progress" + ".log")
 	if err != nil {
 		log.Errorf("创建进度日志文件失败: %v", err)
 	}
@@ -251,12 +253,12 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 
 		task.logCounter++
 		if task.logCounter%1000 == 0 {
-			fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n, 跳过: %d\n",
+			msg := fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n, 跳过: %d\n",
 				time.Now().Format("2006-01-02 15:04:05"),
 				task.Total,
 				task.logCounter,
 				task.skippedCount)
-			// task.logFile.WriteString(msg)
+			task.logFile.WriteString(msg)
 		}
 	}()
 
