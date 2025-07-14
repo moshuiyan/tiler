@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math"
@@ -59,7 +60,13 @@ type Task struct {
 
 // NewTask 创建下载任务
 func NewTask(layers []Layer, m TileMap) *Task {
-	if len(layers) == 0 {
+	// 如果设置了 exactUrl，则跳过图层处理
+	exactUrl := viper.GetString("task.exactUrl")
+	if exactUrl != "" {
+		layers = []Layer{}
+	}
+	// 仅在未设置 exactUrl 且 layers 为空时才返回 nil
+	if len(layers) == 0 && exactUrl == "" {
 		return nil
 	}
 	id, _ := shortid.Generate()
@@ -382,6 +389,45 @@ func (task *Task) downloadLayer(layer Layer) {
 
 // Download 开启下载任务
 func (task *Task) Download() {
+	exactUrl := viper.GetString("task.exactUrl")
+	if exactUrl != "" {
+		if task.File == "" {
+			outdir := viper.GetString("output.directory")
+			task.File = outdir
+		}
+
+		// 从文件中读取 'z/x/y' 格式的字符串数组
+		// 由于 ioutil.ReadFile 已弃用，从 Go 1.16 开始改用 os.ReadFile
+		fileData, err := os.ReadFile(exactUrl)
+		if err != nil {
+			log.Errorf("读取 exactUrl 文件失败: %v", err)
+			return
+		}
+		var tilePaths []string
+		if err := json.Unmarshal(fileData, &tilePaths); err != nil {
+			log.Errorf("解析 exactUrl 文件失败: %v", err)
+			return
+		}
+		// 处理读取到的瓦片路径
+		for _, path := range tilePaths {
+			var z, x, y int
+			if _, err := fmt.Sscanf(path, "%d/%d/%d", &z, &x, &y); err != nil {
+				log.Errorf("解析瓦片路径 %s 失败: %v", path, err)
+				continue
+			}
+			// 由于 maptile.New 期望的是 maptile.Zoom 类型，而 uint8(z) 可能需要转换为 maptile.Zoom 类型
+			tile := maptile.New(uint32(x), uint32(y), maptile.Zoom(z))
+			select {
+			case task.workers <- tile:
+				time.Sleep(time.Duration(task.timeDelay) * time.Millisecond)
+				task.tileWG.Add(1)
+				go task.tileFetcher(tile, task.TileMap.getTileURL(tile))
+			}
+		}
+		task.tileWG.Wait()
+		return
+	}
+
 	//g orb.Geometry, minz int, maxz int
 	task.Bar = pb.New64(task.Total).Prefix("Task : ").Postfix("\n")
 	// task.Bar.SetRefreshRate(10 * time.Second)

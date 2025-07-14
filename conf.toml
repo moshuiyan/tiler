@@ -8,6 +8,9 @@
 	#directory ="D:\\SGDownload\\ChinaGrid\\china2\\"
 	directory ="D:\\downloads\\map\\"
 [task]
+	# 新增配置，指定存储 'z/x/y' 格式字符串数组的 json 文件路径
+	exactUrl = ""
+	#exactUrl = "D:\\downloads\\40.json"
 	#number of fetchers
 	workers = 20
 	#number of savers
@@ -19,12 +22,12 @@
 
 [tm]
 	#name for mbtiles
-	name = "藻渡水库dem"
+	name = "windArray"
 	#max and min level for mbtiles
-	min = 18
-	max = 18
+	min = 0
+	max = 2
 	#can be pbf/png/jpg
-	format = "png"
+	format = "mrt"
 	#can be xyz/tm
 	schema = "xyz"
 	#the vector tiles metadata tilejson
@@ -36,11 +39,14 @@
 	# url = "http://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=75f0434f240669f4a2df6359275146d2"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
+	# url = "https://api.jl1mall.com/getMap/{z}/{x}/{-y}?mk=73ad26c4aa6957eef051ecc5a15308b4&tk=8e28d16fb62e6338dba1e845311361b9"
 
-	url = "https://api.mapbox.com/raster/v1/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.webp?sku=101fxqAeRbtqp&access_token=pk.eyJ1IjoibW9zaHVpeWFuZ3l1ZSIsImEiOiJjbWJxODhwcHQwMTYxMmpxdmdrbDVzOWZhIn0.93db9jdAM7yaiT6tAbdHeQ"
+	#url = "https://api.mapbox.com/raster/v1/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.webp?sku=101fxqAeRbtqp&access_token=pk.eyJ1IjoibW9zaHVpeWFuZ3l1ZSIsImEiOiJjbWJxODhwcHQwMTYxMmpxdmdrbDVzOWZhIn0.93db9jdAM7yaiT6tAbdHeQ"
+	url="https://api.mapbox.com/rasterarrays/v1/rasterarrayexamples.gfs-winds/{z}/{x}/{y}.mrt?jobid=clwv463e3002z08jtgzflggiu&sku=101oh3penGhrj&access_token=pk.eyJ1IjoibW9zaHVpeWFuZ3l1ZSIsImEiOiJjbWJxODhwcHQwMTYxMmpxdmdrbDVzOWZhIn0.93db9jdAM7yaiT6tAbdHeQ"
 #lrs can set diff boundaries for diff levels
-  [[lrs]]
-  	min = 1
-  	max = 8
-  	# geojson = "./geojson/id_1.geojson"
-	geojson ="D:\\downloads\\demRange.geojson"
+ [[lrs]]
+  	min = 0
+  	max = 2
+  	geojson = "./geojson/rect.geojson"
+	# geojson ="D:\\downloads\\shp.json"
+	

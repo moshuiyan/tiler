@@ -197,19 +197,30 @@ func main() {
 	if err != nil {
 		log.Fatal("lrs配置错误")
 	}
+
 	var layers []Layer
 	for _, lrs := range cfgLrs {
-		for z := lrs.Min; z <= lrs.Max; z++ {
-			c := loadCollection(lrs.Geojson)
-			layer := Layer{
+		if lrs.Max < lrs.Min {
+			log.Fatal("min max zoom配置错误")
+		}
+		// 当设置了exactUrl时完全跳过GeoJSON图层处理
+			exactUrl := viper.GetString("task.exactUrl")
+			if exactUrl == "" {
+				for z := lrs.Min; z <= lrs.Max; z++ {
+					c := loadCollection(lrs.Geojson)
+					layer := Layer{
 				URL:        lrs.URL,
 				Zoom:       z,
 				Collection: c,
 			}
 			layers = append(layers, layer)
-		}
-	}
+					}
+				}
+				}
 	task := NewTask(layers, tm)
+	if task == nil {
+		log.Fatal("task is nil")
+	}
 	fmt.Println(task.workerCount)
 	task.Download()
 	secs := time.Since(start).Seconds()
