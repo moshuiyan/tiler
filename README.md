@@ -59,8 +59,22 @@ A well-polished tile downloader
 
 > 工具已经处理了天地图429限制，请合理使用！！！
 
+## 安装依赖及打包
+换源
+```
+go env | findstr GOPROXY
+go env -w GOPROXY=https://mirrors.aliyun.com/goproxy/
+```
+
+安装 
+```
+go mod download
+go mod tidy
+go build -o tiler
+```
+
 # 个性化功能
  统计日志简化每1000记录一次
  下载路径不再附加hash前缀， 可以跳过已存在的瓦片
  calconly 仅统计不下载
- exactUrl 直接从任务列表下载
+ exactUrl 直接从任务列表下载,目前就是一个单数组的json文件
