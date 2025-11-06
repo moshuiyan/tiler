@@ -18,7 +18,7 @@
 	#min request interval, a speed limit, unit millisecond
 	timedelay = 20
 	# 仅统计不下载
-	calconly = false
+	calconly = true
 
 [tm]
 	#name for mbtiles
@@ -27,26 +27,29 @@
 	min = 0
 	max = 2
 	#can be pbf/png/jpg
-	format = "webp"
+	format = "png"
 	#can be xyz/tm
 	schema = "xyz"
 	#the vector tiles metadata tilejson
 	#json = "./geojson/rect.geojson"
 	#url is the schema url of tiles
+	# Google卫星 "https://gac-geo.googlecnapps.club/maps/vt?lyrs=s&x={x}&y={y}&z={z}"
+    # Google街道 "https://gac-geo.googlecnapps.club/maps/vt?lyrs=m&x={x}&y={y}&z={z}"
+    # Google地形 "https://gac-geo.googlecnapps.club/maps/vt?lyrs=t&x={x}&y={y}&z={z}"
 	# url = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8/{z}/{x}/{y}.vector.pbf?sku=1016gFniej06a&access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA"
 	# url = "https://api.mapbox.com/v4/mapbox.mapbox-terrain-v2/{z}/{x}/{y}.vector.pbf?sku=1016gFniej06a&access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA"
 	# url = "https://api.maptiler.com/tiles/v3/{z}/{x}/{y}.pbf?key=KDhMfHvorAFkFe64wlZb"
 	# url = "http://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=75f0434f240669f4a2df6359275146d2"
-	# url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
+	 url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
 	# url = "https://api.jl1mall.com/getMap/{z}/{x}/{-y}?mk=73ad26c4aa6957eef051ecc5a15308b4&tk=8e28d16fb62e6338dba1e845311361b9"
 
-	url = "https://api.mapbox.com/raster/v1/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.webp?sku=101iMRX7adL6P&access_token=pk.eyJ1IjoiYmlud25hZyIsImEiOiJjbDE0ZXB5ZGgwOXVhM2RvamNtd2JiZGxrIn0.sEVbroN0zj4ztS1AputKCQ"
+	#url = "https://api.mapbox.com/raster/v1/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.webp?sku=101iMRX7adL6P&access_token=pk.eyJ1IjoiYmlud25hZyIsImEiOiJjbDE0ZXB5ZGgwOXVhM2RvamNtd2JiZGxrIn0.sEVbroN0zj4ztS1AputKCQ"
 	#url="https://api.mapbox.com/rasterarrays/v1/rasterarrayexamples.gfs-winds/{z}/{x}/{y}.mrt?jobid=clwv463e3002z08jtgzflggiu&sku=101oh3penGhrj&access_token=pk.eyJ1IjoibW9zaHVpeWFuZ3l1ZSIsImEiOiJjbWJxODhwcHQwMTYxMmpxdmdrbDVzOWZhIn0.93db9jdAM7yaiT6tAbdHeQ"
 #lrs can set diff boundaries for diff levels
  [[lrs]]
-  	min = 0
-  	max = 2
-  	geojson = "./geojson/rect.geojson"
-	# geojson ="D:\\downloads\\shp.json"
+  	min = 10
+  	max = 18
+  	#geojson = "./geojson/rect.geojson"
+	 geojson ="D:\\downloads\\btw.json"
 	

@@ -1,0 +1,1 @@
+rsync /prod/map/temp16  /prod/map/img_w/16
