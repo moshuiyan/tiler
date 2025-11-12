@@ -10,7 +10,9 @@
 [task]
 	# 新增配置，指定存储 'z/x/y' 格式字符串数组的 json 文件路径
 	#exactUrl = ""
-	exactUrl = "D:\\downloads\\10_0.json"
+	#exactUrl = "D:\\downloads\\10_0.json"
+	# 新增配置 指定是否跳过已经存在的文件 默认开启
+	skip_exists = false
 	#number of fetchers
 	workers = 20
 	#number of savers
@@ -18,14 +20,14 @@
 	#min request interval, a speed limit, unit millisecond
 	timedelay = 20
 	# 仅统计不下载
-	calconly = true
+	calconly = false
 
 [tm]
 	#name for mbtiles
-	name = "mapboxDEM"
+	name = "google"
 	#max and min level for mbtiles
 	min = 0
-	max = 2
+	max = 3
 	#can be pbf/png/jpg
 	format = "png"
 	#can be xyz/tm
@@ -41,15 +43,15 @@
 	# url = "https://api.maptiler.com/tiles/v3/{z}/{x}/{y}.pbf?key=KDhMfHvorAFkFe64wlZb"
 	# url = "http://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=75f0434f240669f4a2df6359275146d2"
-	 url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
+	# url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
 	# url = "https://api.jl1mall.com/getMap/{z}/{x}/{-y}?mk=73ad26c4aa6957eef051ecc5a15308b4&tk=8e28d16fb62e6338dba1e845311361b9"
-
+	url = "https://gac-geo.googlecnapps.club/maps/vt?lyrs=s&x={x}&y={y}&z={z}"
 	#url = "https://api.mapbox.com/raster/v1/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.webp?sku=101iMRX7adL6P&access_token=pk.eyJ1IjoiYmlud25hZyIsImEiOiJjbDE0ZXB5ZGgwOXVhM2RvamNtd2JiZGxrIn0.sEVbroN0zj4ztS1AputKCQ"
 	#url="https://api.mapbox.com/rasterarrays/v1/rasterarrayexamples.gfs-winds/{z}/{x}/{y}.mrt?jobid=clwv463e3002z08jtgzflggiu&sku=101oh3penGhrj&access_token=pk.eyJ1IjoibW9zaHVpeWFuZ3l1ZSIsImEiOiJjbWJxODhwcHQwMTYxMmpxdmdrbDVzOWZhIn0.93db9jdAM7yaiT6tAbdHeQ"
 #lrs can set diff boundaries for diff levels
  [[lrs]]
-  	min = 10
-  	max = 18
-  	#geojson = "./geojson/rect.geojson"
-	 geojson ="D:\\downloads\\btw.json"
+  	min = 3
+  	max = 3
+  	geojson = "./geojson/rect.geojson"
+	#geojson ="D:\\downloads\\btw.json"
 	

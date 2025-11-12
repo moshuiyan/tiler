@@ -64,6 +64,7 @@ func initConf(cfgFile string) {
 	viper.SetDefault("task.savepipe", 1)
 	viper.SetDefault("task.timedelay", 0)
 	viper.SetDefault("task.calconly", false)
+	viper.SetDefault("task.skip_exists", true)
 }
 
 type TileData struct {

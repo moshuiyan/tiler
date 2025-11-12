@@ -55,7 +55,8 @@ type Task struct {
 	logCounter         int      // 新增日志计数器
 	skippedCount       int      // 跳过的瓦片数量
 	logFile            *os.File // 新增日志文件句柄
-	calconly           bool
+	calconly           bool     // 仅计算不下载
+	skip_exists        bool     // 跳过已存在的瓦片
 }
 
 // NewTask 创建下载任务
@@ -88,6 +89,7 @@ func NewTask(layers []Layer, m TileMap) *Task {
 		TileMap:  m,
 		logFile:  logFile, // 设置文件句柄
 		calconly: viper.GetBool("task.calconly"),
+		skip_exists: viper.GetBool("task.skip_exists"),
 	}
 
 	for i := 0; i < len(layers); i++ {
@@ -360,18 +362,20 @@ func (task *Task) downloadLayer(layer Layer) {
 	for tile := range tilelist {
 		// 检查文件是否已经存在
 		filePath := getTileFilePath(tile, task)
-		if _, err := os.Stat(filePath); err == nil {
-			// 文件已存在，跳过下载
-			// 使用 task.logFile 写入日志
-			task.skippedCount++
-			// 原代码中 filepath 是包名，此处应使用具体的文件路径变量 filePath
-			fmt.Sprintf("%s 已跳过\n", filePath)
-			// if _, err := task.logFile.WriteString(logEntry); err != nil {
-			//     fmt.Printf("写入日志失败: %v\n", err)
-			// }
-			bar.Increment()
-			task.Bar.Increment()
-			continue
+		if task.skip_exists{
+			if _, err := os.Stat(filePath); err == nil {
+				// 文件已存在，跳过下载
+				// 使用 task.logFile 写入日志
+				task.skippedCount++
+				// 原代码中 filepath 是包名，此处应使用具体的文件路径变量 filePath
+				fmt.Sprintf("%s 已跳过\n", filePath)
+				// if _, err := task.logFile.WriteString(logEntry); err != nil {
+					//     fmt.Printf("写入日志失败: %v\n", err)
+					// }
+					bar.Increment()
+					task.Bar.Increment()
+					continue
+			}
 		}
 
 		select {
