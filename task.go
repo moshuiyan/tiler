@@ -57,6 +57,10 @@ type Task struct {
 	logFile            *os.File // 新增日志文件句柄
 	calconly           bool     // 仅计算不下载
 	skip_exists        bool     // 跳过已存在的瓦片
+	maxDownloadCount int64         // 最大下载次数
+	downloadCount    int64         // 当前下载计数
+	downloadMutex    sync.RWMutex  // 下载计数器锁
+	abortOnCount     bool          // 是否因次数限制而中止
 }
 
 // NewTask 创建下载任务
@@ -111,7 +115,13 @@ func NewTask(layers []Layer, m TileMap) *Task {
 	task.savingpipe = make(chan Tile, task.savePipeSize)
 	task.bufSize = viper.GetInt("task.mergebuf")
 	task.tileSet = Set{M: make(maptile.Set)}
-
+	// 下载次数限制
+	task.maxDownloadCount = int64(viper.GetInt("task.max_download_count"))
+	if task.maxDownloadCount <= 0 {
+		task.maxDownloadCount = math.MaxInt64 // 默认不限制
+	}
+	task.downloadCount = 0
+	task.abortOnCount = false
 	task.outformat = viper.GetString("output.format")
 	return &task
 }
@@ -252,6 +262,38 @@ func (task *Task) saveTile(tile Tile) error {
 	}
 	return nil
 }
+// 增加下载计数
+func (task *Task) incrementDownloadCount() {
+	task.downloadMutex.Lock()
+	defer task.downloadMutex.Unlock()
+	
+	task.downloadCount++
+	
+	// 检查是否达到限制
+	if task.downloadCount >= task.maxDownloadCount && !task.abortOnCount {
+		task.abortOnCount = true
+		log.Errorf("下载次数达到限制 %d，将中止下载任务", task.maxDownloadCount)
+		
+		// 发送中止信号
+		go func() {
+			task.abort <- struct{}{}
+		}()
+	}
+}
+ 
+// 获取当前下载次数
+func (task *Task) getDownloadCount() int64 {
+	task.downloadMutex.RLock()
+	defer task.downloadMutex.RUnlock()
+	return task.downloadCount
+}
+ 
+// 检查是否应该因次数限制而中止
+func (task *Task) shouldAbortByCount() bool {
+	task.downloadMutex.RLock()
+	defer task.downloadMutex.RUnlock()
+	return task.abortOnCount
+}
 
 // tileFetcher 瓦片加载器
 func (task *Task) tileFetcher(mt maptile.Tile, url string) {
@@ -260,6 +302,7 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 	defer func() {
 		<-task.workers
 
+		task.incrementDownloadCount()
 		task.logCounter++
 		if task.logCounter%1000 == 0 {
 			msg := fmt.Sprintf("[进度] 时间: %s, 总数: %d, 已完成: %d\n, 跳过: %d\n",
@@ -270,7 +313,11 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 			task.logFile.WriteString(msg)
 		}
 	}()
-
+// 检查是否因下载次数限制而中止
+	if task.shouldAbortByCount() {
+		log.Warnf("因下载次数达到限制，中止下载: %v", mt)
+		return
+	}
 	prep := func(t maptile.Tile, url string) string {
 		url = strings.Replace(url, "{x}", strconv.Itoa(int(t.X)), -1)
 		url = strings.Replace(url, "{y}", strconv.Itoa(int(t.Y)), -1)
@@ -360,6 +407,11 @@ func (task *Task) downloadLayer(layer Layer) {
 	go tilecover.CollectionChannel(layer.Collection, maptile.Zoom(layer.Zoom), tilelist)
 
 	for tile := range tilelist {
+		// 在创建新下载任务前检查次数限制
+		if task.shouldAbortByCount() {
+			log.Warnf("因下载次数达到限制，停止创建新的下载任务，层级: %d", layer.Zoom)
+			break  // 退出瓦片循环
+		}
 		// 检查文件是否已经存在
 		filePath := getTileFilePath(tile, task)
 		if task.skip_exists{
