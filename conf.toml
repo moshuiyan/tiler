@@ -6,7 +6,7 @@
 	format ="file"
 	#the output dir
 	#directory ="D:\\SGDownload\\ChinaGrid\\china2\\"
-	directory ="E:\\downloads\\map\\"
+	directory ="C:\\downloads\\map\\"
 [task]
 	# 新增配置，指定存储 'z/x/y' 格式字符串数组的 json 文件路径
 	#exactUrl = ""
@@ -14,7 +14,7 @@
 	# 新增配置 指定是否跳过已经存在的文件 默认开启
 	skip_exists = true
 	# 新增配置 下载限制，即token限制
-	max_download_count = 38000
+	max_download_count = 20
 	#number of fetchers
 	workers = 20
 	#number of savers
@@ -26,14 +26,17 @@
 
 [tm]
 	#name for mbtiles
-	name = "jinlin"
+	name = "jilinTest"
+	# 签名配置
+	md5_secret = "f75cf053ef6d5f004d3dad04163e9acd"
+	md5_param_name = "sign"
 	#max and min level for mbtiles
 	min = 0
 	max = 3
 	#can be pbf/png/jpg
 	format = "webp"
-	#can be xyz/tm
-	schema = "xyz"
+	#can be xyz/tms 没用 后面去掉
+	schema = "tms"
 	#the vector tiles metadata tilejson
 	#json = "./geojson/rect.geojson"
 	#url is the schema url of tiles
@@ -46,14 +49,15 @@
 	# url = "http://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=75f0434f240669f4a2df6359275146d2"
 	# url = "https://t0.tianditu.gov.cn/DataServer?T=img_w&x={x}&y={y}&l={z}&tk=e1a6fe2b5ee3dda24d73ad3ee443e155"
-	 url = "https://api.jl1mall.com/getMap/{z}/{x}/{-y}?mk=73ad26c4aa6957eef051ecc5a15308b4&tk=8e28d16fb62e6338dba1e845311361b9"
+	#url = "https://api.jl1mall.com/getMap/{z}/{x}/{-y}?mk=73ad26c4aa6957eef051ecc5a15308b4&tk=8e28d16fb62e6338dba1e845311361b9"
 	# url = "https://gac-geo.googlecnapps.club/maps/vt?lyrs=s&x={x}&y={y}&z={z}"
 	#url = "https://api.mapbox.com/raster/v1/mapbox.mapbox-terrain-dem-v1/{z}/{x}/{y}.webp?sku=101iMRX7adL6P&access_token=pk.eyJ1IjoiYmlud25hZyIsImEiOiJjbDE0ZXB5ZGgwOXVhM2RvamNtd2JiZGxrIn0.sEVbroN0zj4ztS1AputKCQ"
 	#url="https://api.mapbox.com/rasterarrays/v1/rasterarrayexamples.gfs-winds/{z}/{x}/{y}.mrt?jobid=clwv463e3002z08jtgzflggiu&sku=101oh3penGhrj&access_token=pk.eyJ1IjoibW9zaHVpeWFuZ3l1ZSIsImEiOiJjbWJxODhwcHQwMTYxMmpxdmdrbDVzOWZhIn0.93db9jdAM7yaiT6tAbdHeQ"
+	url = "https://api.jl1mall.com/getMap/{z}/{x}/{-y}?mk=3ddec00f5f435270285ffc7ad1a60ce5&tk=09e672492698b3feb0efefc2b8fd0d66"
 #lrs can set diff boundaries for diff levels
  [[lrs]]
-  	min =11
-  	max =12
+  	min =3
+  	max =6
   	geojson = "./geojson/rect.geojson"
 	#geojson ="D:\\downloads\\btw.json"
 	

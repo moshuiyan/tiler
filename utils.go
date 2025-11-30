@@ -14,7 +14,11 @@ import (
 	"github.com/paulmach/orb/maptile/tilecover"
 	log "github.com/sirupsen/logrus"
 )
-
+import (
+    "crypto/md5"
+    "encoding/hex"
+    "regexp"
+)
 func saveToMBTile(tile Tile, db *sql.DB) error {
 	_, err := db.Exec("insert into tiles (zoom_level, tile_column, tile_row, tile_data) values (?, ?, ?, ?);", tile.T.Z, tile.T.X, tile.flipY(), tile.C)
 	// _, err := db.Exec("insert or ignore into tiles (zoom_level, tile_column, tile_row, tile_data) values (?, ?, ?, ?);", tile.T.Z, tile.T.X, tile.flipY(), tile.C)
@@ -181,10 +185,24 @@ func getZoomCount(g orb.Geometry, minz int, maxz int) map[int]int64 {
 	}
 	return info
 }
-// ... existing code ...
+
 func getTileFilePath(tile maptile.Tile, task *Task) string {
     dir := filepath.Join(task.File, fmt.Sprintf("%d", tile.Z), fmt.Sprintf("%d", tile.X))
     fileName := filepath.Join(dir, fmt.Sprintf("%d.%s", tile.Y, task.TileMap.Format))
     return fileName
 }
-// ... existing code ...
+
+func calculateMD5(url string, sk string) string {
+    regex,err := regexp.Compile(`\/getMap.*`)
+    if err != nil {
+        log.Errorf("error compiling regex",err)
+		return ""
+	}
+	matches := regex.FindStringSubmatch(url)
+	str := matches[0] + sk
+	log.Printf("macthUrl: %s, sk: %s",matches[0],sk)
+	h := md5.New()
+	// jl1专用暂时
+    h.Write([]byte(str))
+    return hex.EncodeToString(h.Sum(nil))
+}

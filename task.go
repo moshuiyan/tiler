@@ -318,15 +318,8 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 		log.Warnf("因下载次数达到限制，中止下载: %v", mt)
 		return
 	}
-	prep := func(t maptile.Tile, url string) string {
-		url = strings.Replace(url, "{x}", strconv.Itoa(int(t.X)), -1)
-		url = strings.Replace(url, "{y}", strconv.Itoa(int(t.Y)), -1)
-		maxY := int(math.Pow(2, float64(t.Z))) - 1
-		url = strings.Replace(url, "{-y}", strconv.Itoa(maxY-int(t.Y)), -1)
-		url = strings.Replace(url, "{z}", strconv.Itoa(int(t.Z)), -1)
-		return url
-	}
-	tile := prep(mt, url)
+	// 删掉了原本的方法，现在由 getTile统一处理zxy
+	tile := url
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			// 自定义重定向的行为
@@ -340,8 +333,9 @@ func (task *Task) tileFetcher(mt maptile.Tile, url string) {
 	}
 
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+	req.Header.Set("Referer", "https://map.wemapgis.com")
 	req.Header.Set("Referer", "https://map.tianditu.gov.cn")
-	// req.Header.Set("Referer", "https://jiangsu.tianditu.gov.cn")
+	// https://map.tianditu.gov.cn https://jiangsu.tianditu.gov.cn
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("发送请求失败:", err)

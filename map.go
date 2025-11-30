@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"math"
 
 	"github.com/paulmach/orb/maptile"
 )
@@ -20,6 +21,8 @@ type TileMap struct {
 	JSON        string
 	URL         string
 	Token       string
+    MD5Secret    string  // 对应CG_URL_SK的密钥
+    MD5ParamName string  // 签名参数名，默认为"sign"
 	//such as porxy...
 }
 
@@ -53,6 +56,20 @@ func GetTileMapList() map[int]TileMap {
 func (m TileMap) getTileURL(t maptile.Tile) string {
 	url := strings.Replace(m.URL, "{x}", strconv.Itoa(int(t.X)), -1)
 	url = strings.Replace(url, "{y}", strconv.Itoa(int(t.Y)), -1)
+	maxY := int(math.Pow(2, float64(t.Z))) - 1
+	url = strings.Replace(url, "{-y}", strconv.Itoa(maxY-int(t.Y)), -1)
 	url = strings.Replace(url, "{z}", strconv.Itoa(int(t.Z)), -1)
+	
+
+	  // 添加MD5参数计算
+	if m.MD5Secret != "" && m.MD5ParamName != "" {
+        
+        md5Value := calculateMD5(url,m.MD5Secret)
+        separator := "?"
+        if strings.Contains(url, "?") {
+            separator = "&"
+        }
+        url += separator + m.MD5ParamName + "=" + md5Value
+    }
 	return url
 }

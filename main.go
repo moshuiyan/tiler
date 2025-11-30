@@ -186,6 +186,8 @@ func main() {
 		Schema: viper.GetString("tm.schema"),
 		JSON:   viper.GetString("tm.json"),
 		URL:    viper.GetString("tm.url"),
+		MD5Secret:    viper.GetString("tm.md5_secret")  ,
+		MD5ParamName: viper.GetString("tm.md5_param_name")  ,
 	}
 	type cfgLayer struct {
 		Min     int
